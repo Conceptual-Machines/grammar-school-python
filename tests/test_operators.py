@@ -12,13 +12,13 @@ class TestOperators:
         """Test parsing simple arithmetic expressions."""
         backend = LarkBackend()
 
-        # Test addition
+        # Test addition with named argument
         result = backend.parse("add(a=1 + 2)")
         assert len(result.calls) == 1
         call = result.calls[0]
         assert call.name == "add"
-        assert "_positional_0" in call.args
-        expr = call.args["_positional_0"]
+        assert "a" in call.args
+        expr = call.args["a"]
         assert isinstance(expr, Expression)
         assert expr.operator == "+"
         assert isinstance(expr.left, Value)

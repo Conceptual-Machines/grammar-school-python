@@ -208,8 +208,8 @@ class SmartTransformer(Transformer):
         # Return as list for compatibility, but could be made lazy
         return list(_iter_args())
 
-    def _create_arg(self, children: list) -> Arg | Value:
-        """Create an Arg (named) or return Value (positional)."""
+    def _create_arg(self, children: list) -> Arg | Value | Expression | PropertyAccess:
+        """Create an Arg (named) or return Value/Expression/PropertyAccess (positional)."""
         # Filter out = tokens
         filtered = [c for c in children if not (hasattr(c, "type") and c.type in ("=", "EQ"))]
 
@@ -217,13 +217,15 @@ class SmartTransformer(Transformer):
             # Named argument: IDENTIFIER = value
             name = str(filtered[0])
             value = filtered[1]
-            if not isinstance(value, Value):
+            # Preserve Expression and PropertyAccess objects, only convert tokens to Value
+            if not isinstance(value, (Value, Expression, PropertyAccess)):
                 value = self._create_value(value)
             return Arg(name=name, value=value)
         elif len(filtered) == 1:
             # Positional argument: just the value
             value = filtered[0]
-            if not isinstance(value, Value):
+            # Preserve Expression and PropertyAccess objects, only convert tokens to Value
+            if not isinstance(value, (Value, Expression, PropertyAccess)):
                 value = self._create_value(value)
             return value
         else:
@@ -233,6 +235,9 @@ class SmartTransformer(Transformer):
     def _create_value(self, token: Any) -> Value:
         """Create a Value from a token."""
         if isinstance(token, Value):
+            return token
+        # Preserve Expression and PropertyAccess objects - don't convert to Value
+        if isinstance(token, (Expression, PropertyAccess)):
             return token
 
         if not hasattr(token, "type"):

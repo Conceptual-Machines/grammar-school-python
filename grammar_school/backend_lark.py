@@ -122,8 +122,12 @@ class ASTTransformer(Transformer):
                     positional_index += 1
         return Call(name=str(name), args=args_dict)
 
-    def _token_to_value(self, token) -> Value:
-        """Convert a token to a Value."""
+    def _token_to_value(self, token) -> Value | Expression | PropertyAccess:
+        """Convert a token to a Value, preserving Expression and PropertyAccess."""
+        # Preserve Expression and PropertyAccess objects
+        if isinstance(token, (Expression, PropertyAccess)):
+            return token
+        
         token_str = str(token)
         if token.type == "NUMBER":
             try:
